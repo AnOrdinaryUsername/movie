@@ -1,4 +1,4 @@
-# Django #
+# Django
 *.log
 *.pot
 *.pyc
@@ -6,4 +6,13 @@ __pycache__
 db.sqlite3
 media
 
+# Migrations
+migrations/
+
+# Environments
+.env
+.venv
 venv
+env
+
+.vscode
