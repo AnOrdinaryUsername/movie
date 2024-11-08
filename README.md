@@ -1,5 +1,7 @@
 # Movie
 
+## Installation
+
 Install [Poetry](https://python-poetry.org/docs/#installing-with-the-official-installer) first 
 then install project dependencies
 
@@ -17,4 +19,9 @@ To add dependencies run
 
 ```sh
 poetry add [project-dependency]
+```
+### Install via Docker
+
+```docker
+docker compose up
 ```
