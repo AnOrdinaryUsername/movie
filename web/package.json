@@ -40,5 +40,6 @@
     "postcss-simple-vars": "^7.0.1",
     "prettier": "3.3.3",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@9.12.3"
 }
