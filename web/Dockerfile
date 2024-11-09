@@ -8,9 +8,7 @@ RUN corepack enable
 WORKDIR /app
 COPY . /app
 
-FROM base
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
 EXPOSE 3000
 
-CMD pnpm run dev
+CMD pnpm install && pnpm run dev
