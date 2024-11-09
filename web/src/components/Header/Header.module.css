@@ -1,0 +1,41 @@
+.header {
+    margin-bottom: rem(60px);
+    background-color: var(--mantine-color-body);
+    background: inherit;
+  }
+  
+  .inner {
+    padding: rem(20px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 2px solid var(--mantine-color-black);
+    border-radius: rem(16px);
+    background: var(--mantine-color-white);
+  
+    @media (min-width: $mantine-breakpoint-sm) {
+      padding-left: rem(75px);
+      padding-right: rem(75px);
+    }
+  }
+  
+  .link {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding-left: var(--mantine-spacing-md);
+    padding-right: var(--mantine-spacing-md);
+    text-decoration: none;
+    color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+    font-weight: 500;
+    font-size: var(--mantine-font-size-sm);
+  
+    @media (max-width: $mantine-breakpoint-sm) {
+      height: rem(42px);
+      width: 100%;
+    }
+  
+    @mixin hover {
+      background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+    }
+  }

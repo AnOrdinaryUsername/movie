@@ -1,20 +1,29 @@
 from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from djoser.serializers import UserCreateSerializer
+
 from rest_framework import serializers
 from api import models
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+User = get_user_model()
+
+
+class UserCreateSerializer(UserCreateSerializer):
+    class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ['url', 'username', 'email', 'groups']
+        fields = ("id", "email", "username", "password")
 
-
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Group
-        fields = ['url', 'name']
 
 class MovieInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.MovieInfo
-        fields = ['id', 'genre', 'actors_list', 'media_title', 'media_length', 'media_description']
+        fields = [
+            "id",
+            "genre",
+            "actors_list",
+            "media_title",
+            "media_length",
+            "media_description",
+            "image_url",
+        ]
