@@ -1,8 +1,23 @@
 services:
   server:
     build: .
+    volumes:
+      - .:/app
     ports:
       - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: movieproj
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   web:
     build:
@@ -12,3 +27,6 @@ services:
       - ./web:/app
     ports:
       - "3000:3000"
+
+volumes:
+  postgres_data:
