@@ -8,14 +8,16 @@ export default function HomePage() {
     <GenericLayout size="lg" bg="#dce4f5">
       <Header />
       <Container component="main" p={0} m={0} maw="100%" mih="100%">
-      <Center>
-        <Stack>
-          <Title>Reel Reviews</Title>
-          <Text>Made by Real People</Text>
-          <Button component={Link} href="/sign-up">Sign Up</Button>
-        </Stack>
-      </Center>
-    </Container>
+        <Center>
+          <Stack>
+            <Title>Reel Reviews</Title>
+            <Text>Made by Real People</Text>
+            <Button component={Link} href="/sign-up">
+              Sign Up
+            </Button>
+          </Stack>
+        </Center>
+      </Container>
     </GenericLayout>
   );
 }
