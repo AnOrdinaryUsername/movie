@@ -73,19 +73,29 @@ class Person(models.Model):
     birthday = models.DateField()
     name = models.CharField(max_length=80)
     description = models.TextField()
+    image_url = models.TextField(default='')
+
+    def __str__(self):
+        return self.name
 
 class Actor(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     person = models.OneToOneField(Person, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.person.name
+
 # Create your models here.
 class MovieInfo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    genre = models.ManyToManyField(Genre)
+    genres = models.ManyToManyField(Genre)
     actors_list = models.ManyToManyField(Actor)
     # writers_list = 
     # directors_list =
     media_title = models.CharField(max_length=100)
     media_length = models.IntegerField()
     media_description = models.TextField()
-    image_url = models.TextField(default='', null=True)
+    image_url = models.TextField(default='')
+
+    def __str__(self):
+        return self.media_title

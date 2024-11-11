@@ -15,12 +15,35 @@ class UserCreateSerializer(UserCreateSerializer):
         fields = ("id", "email", "username", "password")
 
 
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Genre
+        fields = ['id', 'name']
+
+class PersonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Person
+        fields = ['name', 'birthday', 'description', 'image_url']
+
+class ActorSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="person.name")
+    birthday = serializers.DateField(source="person.birthday")
+    description = serializers.CharField(source="person.description")
+    image_url = serializers.CharField(source="person.image_url", required=False)
+
+    class Meta:
+        model = models.Actor
+        fields = ['id', 'name', 'birthday', 'description', 'image_url']
+
 class MovieInfoSerializer(serializers.ModelSerializer):
+    genres = GenreSerializer(many=True)
+    actors_list = ActorSerializer(many=True)
+
     class Meta:
         model = models.MovieInfo
         fields = [
             "id",
-            "genre",
+            "genres",
             "actors_list",
             "media_title",
             "media_length",

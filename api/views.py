@@ -12,6 +12,9 @@ class MovieInfoList(generics.ListCreateAPIView):
     queryset = models.MovieInfo.objects.all()
     serializer_class = MovieInfoSerializer
 
-class MovieInfoDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = models.MovieInfo.objects.all()
+class MovieInfoDetail(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = MovieInfoSerializer
+
+    def get_object(self, queryset=None):
+        return models.MovieInfo.objects.get(pk=self.kwargs['pk'])
