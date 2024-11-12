@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'corsheaders',
     'api',
     'movie',
 ]
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -123,6 +125,10 @@ DJOSER = {
         "user_delete": "djoser.serializers.UserSerializer",
     }
 }
+
+CORS_ORIGIN_WHITELIST = [
+    'https://localhost:3000'
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
