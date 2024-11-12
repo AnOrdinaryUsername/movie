@@ -1,15 +1,6 @@
 import GenericLayout from '@/components/Layouts';
 import Header from '@/components/Header';
-import {
-  Card,
-  Container,
-  Image,
-  rem,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core';
+import { Card, Container, Image, rem, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import Link from 'next/link';
 
 import type { GetServerSidePropsContext } from 'next';
@@ -26,7 +17,13 @@ export default function MoviesPage({ movies }: Props) {
       <Container component="main" p={0} m={0} maw="100%" mih="100%">
         <SimpleGrid cols={3}>
           {movies.map(
-            ({ id, media_title, media_length, media_description, image_url }: Partial<MovieInfo>) => (
+            ({
+              id,
+              media_title,
+              media_length,
+              media_description,
+              image_url,
+            }: Partial<MovieInfo>) => (
               <Stack id={id} key={id}>
                 <Card component={Link} href={`/movies/${id}`} p={rem(16)} radius="md">
                   <Image
