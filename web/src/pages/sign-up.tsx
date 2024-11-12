@@ -10,26 +10,25 @@ import {
   Title,
   TextInput,
   Anchor,
+  List,
 } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import Header from '@/components/Header';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { useState } from 'react';
 
 import GenericLayout from '@/components/Layouts';
+import type { AccountCreationFailure, LoginToken } from '@/types';
 
 export default function SignUpPage() {
-  const router = useRouter();
-  const [username, setUsername] = useState<string>('');
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | null>(null);
+  const [error, setError] = useState<AccountCreationFailure | null>(null);
 
   const form = useForm({
     initialValues: {
       email: '',
       password: '',
+      username: '',
     },
 
     validate: {
@@ -37,14 +36,63 @@ export default function SignUpPage() {
     },
   });
 
+  function capitalizeFirstLetter(sentence: string) {
+    return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+  }
+
   function hideError() {
-    setEmailError(null);
+    setError(null);
   }
 
   async function signUp() {
-    const { email, password } = form.values;
+    const { email, username, password } = form.values;
 
-    router.push('/user/dashboard');
+    const credentials = JSON.stringify({
+      email,
+      username,
+      password,
+    });
+
+    console.log(credentials);
+
+    const newUser = await fetch('http://localhost:8000/api/v1/auth/users/', {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: credentials,
+    });
+
+    try {
+      if (newUser.status === 400) {
+        const errorResponse: AccountCreationFailure = await newUser.json();
+        setError(errorResponse);
+        throw new Error('Bad Request');
+      }
+
+      console.log(`Created USER: ${username}`)
+
+      const token = await fetch('http://localhost:8000/api/v1/auth/token/login', {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: credentials,
+      });
+
+      if (!token.ok) {
+        throw new Error('Unable to grab login token');
+      }
+
+      const loginToken: LoginToken = await token.json();
+
+      console.log(loginToken.auth_token);
+
+      sessionStorage.setItem('token', loginToken.auth_token);
+    } catch (error) {
+      console.error(error);
+    }
+
   }
 
   return (
@@ -73,7 +121,7 @@ export default function SignUpPage() {
                 label="Username"
                 placeholder="my_unique_name"
                 type="text"
-                error={nameError}
+                {...form.getInputProps('username')}
               />
               <TextInput
                 withAsterisk
@@ -102,7 +150,7 @@ export default function SignUpPage() {
               </Group>
             </Stack>
           </form>
-          {emailError && (
+          {error && (
             <Alert
               variant="light"
               color="red"
@@ -111,7 +159,29 @@ export default function SignUpPage() {
               title="Error"
               icon={<IconInfoCircle />}
             >
-              {emailError}
+              <List>
+                {error.email && (<Text component='span'>
+                  Email error(s):
+                  {error.email.map((err, i) => (
+                    <List.Item key={i}>{capitalizeFirstLetter(err)}</List.Item>
+                  ))}
+                  </Text>)
+                  }
+                {error.username && (<Text component='span'>
+                  Username error(s):
+                  {error.username.map((err, i) => (
+                    <List.Item key={i}>{capitalizeFirstLetter(err)}</List.Item>
+                  ))}
+                  </Text>)
+                  }
+                {error.password && (<Text component='span'>
+                  Email error(s):
+                  {error.password.map((err, i) => (
+                    <List.Item key={i}>{capitalizeFirstLetter(err)}</List.Item>
+                  ))}
+                  </Text>)
+                  }
+              </List>
             </Alert>
           )}
           <Text size="gray" ta="center" mt={rem(16)}>

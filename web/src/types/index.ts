@@ -20,3 +20,21 @@ export interface Actor {
   description: string;
   image_url: string;
 }
+
+export interface AccountCreationSuccess {
+  id: number;
+  email: string;
+  username: string;
+}
+
+export interface AccountCreationFailure {
+  email?: Array<string>;
+  username?: Array<string>;
+  password?: Array<string>;
+}
+
+export type AccountCreation = AccountCreationSuccess | AccountCreationFailure;
+
+export interface LoginToken {
+  auth_token: string;
+}
