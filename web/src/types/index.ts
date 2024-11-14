@@ -38,3 +38,9 @@ export type AccountCreation = AccountCreationSuccess | AccountCreationFailure;
 export interface LoginToken {
   auth_token: string;
 }
+
+export interface LoginFailure {
+  non_field_errors?: Array<string>;
+  password?: Array<string>;
+  username?: Array<string>;
+}
