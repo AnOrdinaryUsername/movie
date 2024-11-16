@@ -1,6 +1,6 @@
 from django.contrib.auth.models import Group, User
 from django.contrib.auth import get_user_model
-from djoser.serializers import UserCreateSerializer
+from djoser.serializers import UserCreateSerializer, UserSerializer
 
 from rest_framework import serializers
 from api import models
@@ -11,6 +11,7 @@ User = get_user_model()
 
 class UserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
+        ref_name = 'CustomUserCreateSerializer'
         model = User
         fields = ("id", "email", "username", "password")
 
@@ -35,6 +36,12 @@ class ActorSerializer(serializers.ModelSerializer):
         model = models.Actor
         fields = ['id', 'name', 'birthday', 'description', 'image_url']
 
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Review
+        fields = ['id', 'user', 'movie', 'content']
+        
 class MovieInfoSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True)
     actors_list = ActorSerializer(many=True)
@@ -48,5 +55,5 @@ class MovieInfoSerializer(serializers.ModelSerializer):
             "media_title",
             "media_length",
             "media_description",
-            "image_url",
+            "image_url"
         ]

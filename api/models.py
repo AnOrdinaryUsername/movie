@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 import uuid
 
 from django.contrib.auth.models import (
@@ -70,7 +71,7 @@ class Genre(models.Model):
     
 class Person(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    birthday = models.DateField()
+    birthday = models.DateField(default=None, blank=True, null=True)
     name = models.CharField(max_length=80)
     description = models.TextField()
     image_url = models.TextField(default='')
@@ -99,3 +100,9 @@ class MovieInfo(models.Model):
 
     def __str__(self):
         return self.media_title
+
+class Review(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    movie = models.ForeignKey(MovieInfo, on_delete=models.CASCADE, related_name="movie_id")
+    content = models.TextField()
