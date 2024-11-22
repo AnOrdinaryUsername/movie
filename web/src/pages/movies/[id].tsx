@@ -22,7 +22,6 @@ import type { MovieInfo, Genre } from '@/types';
 import { useDisclosure } from '@mantine/hooks';
 import { useEffect, useState } from 'react';
 
-
 interface Review {
   id: string;
   user: number;
@@ -49,7 +48,7 @@ export default function MoviesPage({
   media_description,
   image_url,
   movie_id,
-  reviews
+  reviews,
 }: Props) {
   const [user, setUser] = useState<User | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
@@ -57,52 +56,51 @@ export default function MoviesPage({
 
   useEffect(() => {
     const token = sessionStorage.getItem('token');
-    let user: User | null = null;
-    
+
     if (token !== null) {
       const auth = {
-        'Authorization': `Token ${token}`
-      }
+        Authorization: `Token ${token}`,
+      };
 
       fetch(`http://localhost:8000/api/v1/auth/users/me`, {
-        headers: new Headers(auth)
+        headers: new Headers(auth),
       })
-      .then((res) => res.json())
-      .then((data) => {
-        setUser(data)
-      });
+        .then((res) => res.json())
+        .then((data) => {
+          setUser(data);
+        });
     }
   }, []);
 
   async function submitReview() {
     const token = sessionStorage.getItem('token');
     console.log(user);
-  
+
     if (token !== null && user !== null) {
       const headers = {
         'Content-Type': 'application/json',
-        'Authorization': `Token ${token}`
-      }
+        Authorization: `Token ${token}`,
+      };
 
       const body = {
         user: user.id,
         movie: movie_id,
         content: text,
-      }
+      };
 
       const newReview = await fetch(`http://localhost:8000/api/v1/movies/${movie_id}/reviews`, {
         method: 'POST',
         headers: new Headers(headers),
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
 
       try {
         if (newReview.status !== 201) {
-          throw new Error("Unable to create a review.")
+          throw new Error('Unable to create a review.');
         }
-        console.log(`${user.username} created a review for ${media_title}.`)
+        console.log(`${user.username} created a review for ${media_title}.`);
       } catch (error) {
-        console.error(error)
+        console.error(error);
       }
     }
   }
@@ -169,13 +167,10 @@ export default function MoviesPage({
           </Group>
         </Stack>
         <Stack>
-            {reviews && reviews.map((review) => (
+          {reviews &&
+            reviews.map((review) => (
               <Stack key={review.id}>
-                <Card
-                  p={rem(16)}
-                  radius="md"
-                  w="100%"
-                >
+                <Card p={rem(16)} radius="md" w="100%">
                   <Title order={3} pt={rem(16)}>
                     {review.user}
                   </Title>
@@ -183,16 +178,20 @@ export default function MoviesPage({
                 </Card>
               </Stack>
             ))}
-          </Stack>
+        </Stack>
         <Modal centered opened={opened} onClose={close} title="My Review">
-          <Textarea 
-            resize="vertical" 
-            label="Review" 
-            placeholder="This movie is amazing!"
-            value={text}
-            onChange={(event) => setText(event.currentTarget.value)}
-          />
-          <Button onClick={submitReview}>Submit</Button>
+          <Stack>
+            <Textarea
+              resize="vertical"
+              label="Review"
+              placeholder="This movie is amazing!"
+              value={text}
+              onChange={(event) => setText(event.currentTarget.value)}
+            />
+            <Button onClick={submitReview} mt={rem(24)}>
+              Submit
+            </Button>
+          </Stack>
         </Modal>
       </Container>
     </GenericLayout>
@@ -214,22 +213,19 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       console.error(error);
     });
 
-
   let reviews: Array<Review> | null = null;
 
   try {
     const movieReviews = await fetch(`http://localhost:8000/api/v1/movies/${id}/reviews`);
 
     if (!movieReviews.ok) {
-      throw new Error("Reviews did not return a 200 response")
+      throw new Error('Reviews did not return a 200 response');
     }
 
     reviews = await movieReviews.json();
-
   } catch (error) {
     console.error(error);
   }
-
 
   const { genres, actors_list, media_title, media_length, media_description, image_url } = result;
 
