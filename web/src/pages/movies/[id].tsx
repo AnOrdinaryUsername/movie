@@ -52,6 +52,7 @@ export default function MoviesPage({
 }: Props) {
   const [user, setUser] = useState<User | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
+  const [userReviews, setUserReviews] = useState<Array<Review> | null>(reviews);
   const [text, setText] = useState('');
 
   useEffect(() => {
@@ -98,7 +99,14 @@ export default function MoviesPage({
         if (newReview.status !== 201) {
           throw new Error('Unable to create a review.');
         }
+
         console.log(`${user.username} created a review for ${media_title}.`);
+
+        const review: Review = await newReview.json();
+        const prevReviews = userReviews ?? [];
+        setUserReviews([...prevReviews, review]);
+
+        close();
       } catch (error) {
         console.error(error);
       }
@@ -167,8 +175,8 @@ export default function MoviesPage({
           </Group>
         </Stack>
         <Stack>
-          {reviews &&
-            reviews.map((review) => (
+          {userReviews &&
+            userReviews.map((review) => (
               <Stack key={review.id}>
                 <Card p={rem(16)} radius="md" w="100%">
                   <Title order={3} pt={rem(16)}>
