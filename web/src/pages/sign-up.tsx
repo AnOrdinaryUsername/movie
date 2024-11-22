@@ -20,8 +20,10 @@ import { useState } from 'react';
 
 import GenericLayout from '@/components/Layouts';
 import type { AccountCreationFailure, LoginToken } from '@/types';
+import { useRouter } from 'next/router';
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [error, setError] = useState<AccountCreationFailure | null>(null);
 
   const form = useForm({
@@ -89,6 +91,7 @@ export default function SignUpPage() {
       console.log(loginToken.auth_token);
 
       sessionStorage.setItem('token', loginToken.auth_token);
+      router.push('/movies');
     } catch (error) {
       console.error(error);
     }

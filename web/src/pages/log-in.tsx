@@ -20,8 +20,10 @@ import Link from 'next/link';
 import GenericLayout from '@/components/Layouts';
 import { LoginFailure, LoginToken } from '@/types';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [error, setError] = useState<LoginFailure | null>(null);
 
   const form = useForm({
@@ -67,6 +69,7 @@ export default function LoginPage() {
       console.log(loginToken.auth_token);
 
       sessionStorage.setItem('token', loginToken.auth_token);
+      router.push('/movies');
     } catch (error) {
       console.error(error);
     }
