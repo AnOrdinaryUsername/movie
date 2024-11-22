@@ -40,7 +40,14 @@ export default function Header({ hideButtons }: Props) {
         <Container size="lg" className={classes.inner}>
           <Group justify="space-between" h="100%" w="100%">
             <Anchor href="/">
-              <Image fit="contain" alt="Reel Reviews" maw={rem(200)} w="100%" src="/logo.svg" />
+              <Image
+                fit="contain"
+                alt="Reel Reviews"
+                h={rem(22)}
+                maw={rem(200)}
+                w="100%"
+                src="/logo.svg"
+              />
             </Anchor>
             <Group gap={5} visibleFrom="md">
               {items}
