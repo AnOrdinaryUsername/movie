@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 import uuid
 
 from django.contrib.auth.models import (
@@ -34,7 +33,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     objects = CustomUserManager()
-
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
@@ -54,13 +52,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.username
 
 
-class MoviePage(models.Model):
-    # wiki_entries = 
-    # wiki_news = 
-    wiki_rating = models.SmallIntegerField()
-    box_office_total = models.IntegerField()
-    entry_views = models.IntegerField()
-    release_date = models.DateField()
+
     
 class Genre(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -71,10 +63,13 @@ class Genre(models.Model):
     
 class Person(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    birthday = models.DateField(default=None, blank=True, null=True)
+    birthday = models.DateField()
     name = models.CharField(max_length=80)
     description = models.TextField()
     image_url = models.TextField(default='')
+
+    #roles = models.
+    #movie_appreances = models.
 
     def __str__(self):
         return self.name
@@ -85,24 +80,64 @@ class Actor(models.Model):
 
     def __str__(self):
         return self.person.name
+    
+# Writer Model
+class Writer(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable = False)
+    writer_credit = models.OneToOneField(Person, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.writer_credit.name
+
+
+# Director Model
+class Director(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable = False)
+    director_credit = models.OneToOneField(Person, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.director_credit.name
+    
 
 # Create your models here.
 class MovieInfo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     genres = models.ManyToManyField(Genre)
+
     actors_list = models.ManyToManyField(Actor)
-    # writers_list = 
-    # directors_list =
+    writers_list = models.ManyToManyField(Writer)
+    directors_list = models.ManyToManyField(Director)
+
     media_title = models.CharField(max_length=100)
+    media_relasease_date = models.DateField()
     media_length = models.IntegerField()
     media_description = models.TextField()
     image_url = models.TextField(default='')
 
     def __str__(self):
         return self.media_title
+    
+class MoviePage(models.Model):
+    # wiki_entries = 
+    # wiki_news = 
+    wiki_rating = models.SmallIntegerField()
+    box_office_total = models.IntegerField()
+    entry_views = models.IntegerField()
+    release_date = models.DateField()
 
+    movie_information = models.OneToOneField(MovieInfo, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.movie_information.media_title
+    
+
+# Review Model (made because serializer.py had reviews)
 class Review(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    movie = models.ForeignKey(MovieInfo, on_delete=models.CASCADE, related_name="movie_id")
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    movie = models.ForeignKey(MovieInfo, on_delete=models.CASCADE)
     content = models.TextField()
+
+    def __str__(self):
+        return self.content
+    
