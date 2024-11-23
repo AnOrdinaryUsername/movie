@@ -76,7 +76,6 @@ function AuthHeader({ user }: AuthHeaderProps) {
           description: new Date(media_release_date).getFullYear().toString(),
           onClick: () => {
             router.push(`/movies/${id}`);
-            router.reload();
           },
           leftSection: <Image src={image_url} alt={media_title} maw={rem(40)} />
         })
