@@ -109,7 +109,7 @@ class MovieInfo(models.Model):
     directors_list = models.ManyToManyField(Director)
 
     media_title = models.CharField(max_length=100)
-    media_relasease_date = models.DateField()
+    media_release_date = models.DateField()
     media_length = models.IntegerField()
     media_description = models.TextField()
     image_url = models.TextField(default='')
