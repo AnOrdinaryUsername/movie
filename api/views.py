@@ -1,4 +1,4 @@
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework import permissions, viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -49,6 +49,7 @@ class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 class MovieSearchView(APIView):
+    permission_classes = [AllowAny]
     """
     View to handle movie search queries.
     """
