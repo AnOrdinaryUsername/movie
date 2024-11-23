@@ -44,3 +44,8 @@ export interface LoginFailure {
   password?: Array<string>;
   username?: Array<string>;
 }
+
+export interface User {
+  username: string;
+  id: number;
+}

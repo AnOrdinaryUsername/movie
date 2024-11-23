@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import type { GetServerSidePropsContext } from 'next';
 import { MovieInfo } from '@/types';
+import { convertToReadableTime } from '@/utils';
 
 interface Props {
   movies: Array<MovieInfo>;
@@ -34,7 +35,7 @@ export default function MoviesPage({ movies }: Props) {
                     radius="md"
                   />
                   <Title pt={rem(16)}>{media_title}</Title>
-                  <Text>{media_length} hours</Text>
+                  <Text>{convertToReadableTime(media_length!)}</Text>
                   <Text>{media_description}</Text>
                 </Card>
               </Stack>

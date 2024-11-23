@@ -1,6 +1,7 @@
 import GenericLayout from '@/components/Layouts';
 import Header from '@/components/Header';
 import {
+  ActionIcon,
   Badge,
   Button,
   Card,
@@ -15,23 +16,21 @@ import {
   Textarea,
   Title,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import Link from 'next/link';
 
 import type { GetServerSidePropsContext } from 'next';
-import type { MovieInfo, Genre } from '@/types';
+import type { MovieInfo, Genre, User } from '@/types';
 import { useDisclosure } from '@mantine/hooks';
 import { useEffect, useState } from 'react';
+import { convertToReadableTime } from '@/utils';
+import { IconHeart, IconHeartFilled } from '@tabler/icons-react';
 
 interface Review {
   id: string;
   user: number;
   movie: string;
   content: string;
-}
-
-interface User {
-  username: string;
-  id: number;
 }
 
 interface Props extends MovieInfo {
@@ -50,6 +49,7 @@ export default function MoviesPage({
   movie_id,
   reviews,
 }: Props) {
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [userReviews, setUserReviews] = useState<Array<Review> | null>(reviews);
@@ -113,6 +113,60 @@ export default function MoviesPage({
     }
   }
 
+  async function addToFavorites() {
+    if (!user) {
+      return;
+    }
+
+    const token = sessionStorage.getItem('token');
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Token ${token}`,
+    };
+
+    const body = {
+      favorites: [{
+        id: movie_id,
+        media_title,
+        image_url,
+      }]
+    };
+
+    const result = await fetch(`http://localhost:8000/api/v1/users/${user.id}/favorites`, {
+      method: 'POST',
+      headers: new Headers(headers),
+      body: JSON.stringify(body)
+    });
+
+    try {
+      if (result.status !== 201) {
+        throw new Error(`Can't save ${media_title} to favorites. Server returned an invalid response.`);
+      }
+
+      setIsFavorite(true);
+      notifications.show({
+        withCloseButton: true,
+        autoClose: 30000,
+        title: 'Success',
+        message: `Added ${media_title} to favorites!`,
+        color: 'green',
+        loading: false,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        notifications.show({
+          withCloseButton: true,
+          autoClose: 30000,
+          title: 'Error',
+          message: error.message,
+          color: 'red',
+          loading: false,
+        });
+      }
+    }
+  }
+
   return (
     <GenericLayout size="lg" bg="#dce4f5">
       <Header />
@@ -127,7 +181,7 @@ export default function MoviesPage({
                 flex={1}
                 radius="md"
               />
-              <Stack pl={rem(40)}>
+              <Stack pl={rem(40)} maw={rem(600)}>
                 <Title order={1} pt={rem(16)}>
                   {media_title}
                 </Title>
@@ -136,8 +190,14 @@ export default function MoviesPage({
                     {name}
                   </Badge>
                 ))}
-                <Text>{media_length} hours</Text>
+                <Text>{convertToReadableTime(media_length)}</Text>
                 <Text>{media_description}</Text>
+                <ActionIcon onClick={addToFavorites} size={rem(42)} variant="light" color="pink" aria-label="Favorite">
+                  { isFavorite 
+                    ? <IconHeartFilled style={{ width: '80%', height: '80%' }} stroke={3} /> 
+                    : <IconHeart style={{ width: '80%', height: '80%' }} stroke={3} />
+                  } 
+              </ActionIcon>
               </Stack>
             </Group>
           </Card>
