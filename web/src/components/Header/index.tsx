@@ -25,7 +25,7 @@ import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { IconChevronDown, IconLogout, IconSearch, IconSettings } from '@tabler/icons-react';
 import { useRouter } from 'next/router';
-import { User } from '@/types';
+import { MovieInfo, User } from '@/types';
 
 const links = [
   { link: '/movies', label: 'Movies' },
@@ -47,31 +47,9 @@ interface AuthHeaderProps {
   user: User;
 }
 
-const actions: SpotlightActionData[] = [
-  {
-    id: 'home',
-    label: 'Home',
-    onClick: () => console.log('Home'),
-    leftSection: <IconSearch style={{ width: rem(24), height: rem(24) }} stroke={1.5} />,
-  },
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    onClick: () => console.log('Dashboard'),
-    leftSection: <IconSearch style={{ width: rem(24), height: rem(24) }} stroke={1.5} />,
-  },
-  {
-    id: 'documentation',
-    label: 'Documentation',
-    onClick: () => console.log('Documentation'),
-    leftSection: <IconSearch style={{ width: rem(24), height: rem(24) }} stroke={1.5} />,
-  },
-];
-
 function AuthHeader({ user }: AuthHeaderProps) {
   const [query, setQuery] = useState('');
-  const [movies, setMovies] = useState<SpotlightActionData | []>([]);
-
+  const [movies, setMovies] = useState<SpotlightActionData[] | []>([]);
 
   const [opened, { toggle, close }] = useDisclosure(false);
   const router = useRouter();
@@ -82,6 +60,31 @@ function AuthHeader({ user }: AuthHeaderProps) {
       {link.label}
     </Anchor>
   ));
+
+  async function searchMovies(query: string) {
+    setQuery(query);
+    const result = await fetch(`http://localhost:8000/api/v1/movies/search?q=${query}`);
+    const searchResults: Array<MovieInfo> = await result.json();
+
+    let movieResults: SpotlightActionData[] = [];
+
+    if (searchResults instanceof Array) {
+      searchResults.forEach(({ id, media_title, media_release_date, image_url }) => {
+        movieResults.push({
+          id,
+          label: media_title,
+          description: new Date(media_release_date).getFullYear().toString(),
+          onClick: () => {
+            router.push(`/movies/${id}`);
+            router.reload();
+          },
+          leftSection: <Image src={image_url} alt={media_title} maw={rem(40)} />
+        })
+      });
+    }
+
+    setMovies(movieResults);
+  }
 
   async function logOut() {
     const token = sessionStorage.getItem('token');
@@ -103,6 +106,7 @@ function AuthHeader({ user }: AuthHeaderProps) {
 
       sessionStorage.clear();
       router.push('/');
+      router.reload();
     } catch (error) {
       if (error instanceof Error) {
         notifications.show({
@@ -139,8 +143,8 @@ function AuthHeader({ user }: AuthHeaderProps) {
 
             <Spotlight
                 query={query}
-                onQueryChange={setQuery}
-                actions={actions}
+                onQueryChange={searchMovies}
+                actions={movies}
                 nothingFound="Nothing found..."
                 highlightQuery
                 limit={5}

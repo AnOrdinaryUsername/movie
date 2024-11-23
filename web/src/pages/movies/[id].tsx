@@ -102,6 +102,15 @@ export default function MoviesPage({
 
         console.log(`${user.username} created a review for ${media_title}.`);
 
+        notifications.show({
+          withCloseButton: true,
+          autoClose: 30000,
+          title: 'Success',
+          message: `Submitted a review for ${media_title}!`,
+          color: 'green',
+          loading: false,
+        });
+
         const review: Review = await newReview.json();
         const prevReviews = userReviews ?? [];
         setUserReviews([...prevReviews, review]);

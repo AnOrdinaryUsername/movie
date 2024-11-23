@@ -5,6 +5,7 @@ export interface MovieInfo {
   media_title: string;
   media_length: number;
   media_description: string;
+  media_release_date: string;
   image_url: string;
 }
 
