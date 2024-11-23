@@ -2,6 +2,7 @@
 // All packages except `@mantine/hooks` require styles imports
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import '@mantine/spotlight/styles.css';
 
 import { MantineProvider, createTheme } from '@mantine/core';
 import type { AppProps } from 'next/app';
