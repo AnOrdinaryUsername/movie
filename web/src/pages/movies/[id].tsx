@@ -56,21 +56,30 @@ export default function MoviesPage({
   const [text, setText] = useState('');
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
+    (async () => {
+      const token = sessionStorage.getItem('token');
 
-    if (token !== null) {
-      const auth = {
-        Authorization: `Token ${token}`,
-      };
+      if (token !== null) {
+        const auth = {
+          Authorization: `Token ${token}`,
+        };
 
-      fetch(`http://localhost:8000/api/v1/auth/users/me`, {
-        headers: new Headers(auth),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setUser(data);
+        const result = await fetch(`http://localhost:8000/api/v1/auth/users/me`, {
+          headers: new Headers(auth),
         });
-    }
+
+        const userData: User = await result.json();
+
+        setUser(userData);
+
+        const fav = await fetch(`http://localhost:8000/api/v1/users/${userData.id}/favorites`);
+        const favorites = await fav.json();
+
+        if (favorites.some(({ id }: { id: string }) => id === movie_id)) {
+          setIsFavorite(true);
+        }
+      }
+    })();
   }, []);
 
   async function submitReview() {
@@ -133,13 +142,13 @@ export default function MoviesPage({
     }
   }
 
-  async function addToFavorites() {
+  async function removeFromFavorites() {
     if (!user) {
       notifications.show({
         withCloseButton: true,
         autoClose: 30000,
         title: 'Not Logged In',
-        message: "Please log in to save movie to favorites.",
+        message: 'Please log in to remove movie from favorites.',
         color: 'red',
         loading: false,
       });
@@ -153,23 +162,77 @@ export default function MoviesPage({
       Authorization: `Token ${token}`,
     };
 
-    const body = {
-      favorites: [{
-        id: movie_id,
-        media_title,
-        image_url,
-      }]
+    const result = await fetch(`http://localhost:8000/api/v1/users/${user.id}/favorites`, {
+      method: 'DELETE',
+      headers: new Headers(headers),
+      body: JSON.stringify({
+        movie_id,
+      }),
+    });
+
+    try {
+      if (result.status !== 204) {
+        throw new Error(
+          `Unable to remove ${media_title} from favorites. Please try again at a later time.`,
+        );
+      }
+
+      setIsFavorite(false);
+      notifications.show({
+        withCloseButton: true,
+        autoClose: 30000,
+        title: 'Success',
+        message: `Removed ${media_title} from favorites.`,
+        color: 'green',
+        loading: false,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        notifications.show({
+          withCloseButton: true,
+          autoClose: 30000,
+          title: 'Error',
+          message: error.message,
+          color: 'red',
+          loading: false,
+        });
+      }
+    }
+  }
+
+  async function addToFavorites() {
+    if (!user) {
+      notifications.show({
+        withCloseButton: true,
+        autoClose: 30000,
+        title: 'Not Logged In',
+        message: 'Please log in to save movie to favorites.',
+        color: 'red',
+        loading: false,
+      });
+      return;
+    }
+
+    const token = sessionStorage.getItem('token');
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Token ${token}`,
     };
 
     const result = await fetch(`http://localhost:8000/api/v1/users/${user.id}/favorites`, {
       method: 'POST',
       headers: new Headers(headers),
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        movie_id,
+      }),
     });
 
     try {
       if (result.status !== 201) {
-        throw new Error(`Can't save ${media_title} to favorites. Server returned an invalid response.`);
+        throw new Error(
+          `Unable to save ${media_title} to favorites. Please try again at a later time.`,
+        );
       }
 
       setIsFavorite(true);
@@ -220,12 +283,19 @@ export default function MoviesPage({
                 ))}
                 <Text>{convertToReadableTime(media_length)}</Text>
                 <Text>{media_description}</Text>
-                <ActionIcon onClick={addToFavorites} size={rem(42)} variant="light" color="pink" aria-label="Favorite">
-                  { isFavorite 
-                    ? <IconHeartFilled style={{ width: '80%', height: '80%' }} stroke={3} /> 
-                    : <IconHeart style={{ width: '80%', height: '80%' }} stroke={3} />
-                  } 
-              </ActionIcon>
+                <ActionIcon
+                  onClick={isFavorite ? removeFromFavorites : addToFavorites}
+                  size={rem(42)}
+                  variant="light"
+                  color="pink"
+                  aria-label="Favorite"
+                >
+                  {isFavorite ? (
+                    <IconHeartFilled style={{ width: '80%', height: '80%' }} stroke={3} />
+                  ) : (
+                    <IconHeart style={{ width: '80%', height: '80%' }} stroke={3} />
+                  )}
+                </ActionIcon>
               </Stack>
             </Group>
           </Card>
