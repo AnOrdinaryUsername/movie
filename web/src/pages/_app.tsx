@@ -9,12 +9,15 @@ import type { AppProps } from 'next/app';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 const theme = createTheme({
   fontFamily: 'Inter',
 });
 
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+
   return (
     <>
       <Head>
@@ -25,7 +28,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <MantineProvider theme={theme}>
         <Notifications />
         <ModalsProvider>
-          <Component {...pageProps} />
+          <Component key={router.asPath} {...pageProps} />
           <style jsx global>{`
             html,
             body,

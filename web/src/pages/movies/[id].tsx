@@ -118,12 +118,31 @@ export default function MoviesPage({
         close();
       } catch (error) {
         console.error(error);
+
+        if (error instanceof Error) {
+          notifications.show({
+            withCloseButton: true,
+            autoClose: 30000,
+            title: 'Review Error',
+            message: error.message,
+            color: 'red',
+            loading: false,
+          });
+        }
       }
     }
   }
 
   async function addToFavorites() {
     if (!user) {
+      notifications.show({
+        withCloseButton: true,
+        autoClose: 30000,
+        title: 'Not Logged In',
+        message: "Please log in to save movie to favorites.",
+        color: 'red',
+        loading: false,
+      });
       return;
     }
 
