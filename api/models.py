@@ -26,32 +26,6 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
     
-class CustomUser(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(max_length=255, unique=True)
-    username = models.CharField(max_length=255, unique=True)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    is_admin = models.BooleanField(default=False)
-    objects = CustomUserManager()
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username"]
-
-    def get_full_name(self):
-        return self.username
-
-    def get_short_name(self):
-        return self.username
-
-    def has_perm(self, perm, obj=None):
-        return True
-
-    def has_module_perms(self, app_label):
-        return True
-
-    def __str__(self):
-        return self.username
-
-
 
     
 class Genre(models.Model):
@@ -117,6 +91,33 @@ class MovieInfo(models.Model):
     def __str__(self):
         return self.media_title
     
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(max_length=255, unique=True)
+    username = models.CharField(max_length=255, unique=True)
+    favorites = models.ManyToManyField(MovieInfo, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
+    objects = CustomUserManager()
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
+
+    def get_full_name(self):
+        return self.username
+
+    def get_short_name(self):
+        return self.username
+
+    def has_perm(self, perm, obj=None):
+        return True
+
+    def has_module_perms(self, app_label):
+        return True
+
+    def __str__(self):
+        return self.username
+    
 class MoviePage(models.Model):
     # wiki_entries = 
     # wiki_news = 
@@ -140,4 +141,3 @@ class Review(models.Model):
 
     def __str__(self):
         return self.content
-    
