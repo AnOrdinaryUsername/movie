@@ -77,8 +77,8 @@ function AuthHeader({ user }: AuthHeaderProps) {
           onClick: () => {
             router.push(`/movies/${id}`);
           },
-          leftSection: <Image src={image_url} alt={media_title} maw={rem(40)} />
-        })
+          leftSection: <Image src={image_url} alt={media_title} maw={rem(40)} />,
+        });
       });
     }
 
@@ -141,21 +141,21 @@ function AuthHeader({ user }: AuthHeaderProps) {
             <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" />
 
             <Spotlight
-                query={query}
-                onQueryChange={searchMovies}
-                actions={movies}
-                nothingFound="Nothing found..."
-                highlightQuery
-                limit={5}
-                searchProps={{
-                  leftSection: (
-                    <IconSearch style={{ width: rem(20), height: rem(20) }} stroke={1.5} />
-                  ),
-                  placeholder: 'Search for a movie',
-                }}
-              />
+              query={query}
+              onQueryChange={searchMovies}
+              actions={movies}
+              nothingFound="Nothing found..."
+              highlightQuery
+              limit={5}
+              searchProps={{
+                leftSection: (
+                  <IconSearch style={{ width: rem(20), height: rem(20) }} stroke={1.5} />
+                ),
+                placeholder: 'Search for a movie',
+              }}
+            />
 
-            <Group visibleFrom='md'>
+            <Group visibleFrom="md">
               <ActionIcon
                 variant="transparent"
                 color="gray"
