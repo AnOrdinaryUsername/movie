@@ -36,7 +36,7 @@ const links = [
 const authLinks = [
   { link: '/movies', label: 'Movies' },
   { link: '/favorites', label: 'Favorites' },
-  { link: '/watch-list', label: 'Watch List' },
+  { link: '/watchlist', label: 'Watch List' },
 ];
 
 interface Props {
@@ -233,7 +233,7 @@ function AuthHeader({ user }: AuthHeaderProps) {
           <Anchor href="/favorites" component={Link} className={classes.link}>
             Favorites
           </Anchor>
-          <Anchor href="/watch-list" component={Link} className={classes.link}>
+          <Anchor href="/watchlist" component={Link} className={classes.link}>
             Watch List
           </Anchor>
 

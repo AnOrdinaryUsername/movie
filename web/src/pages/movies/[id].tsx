@@ -10,7 +10,6 @@ import {
   Image,
   Modal,
   rem,
-  SimpleGrid,
   Stack,
   Text,
   Textarea,
@@ -24,7 +23,7 @@ import type { MovieInfo, Genre, User } from '@/types';
 import { useDisclosure } from '@mantine/hooks';
 import { useEffect, useState } from 'react';
 import { convertToReadableTime } from '@/utils';
-import { IconHeart, IconHeartFilled } from '@tabler/icons-react';
+import { IconCheck, IconHeart, IconHeartFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
 
 interface Review {
   id: string;
@@ -49,6 +48,7 @@ export default function MoviesPage({
   movie_id,
   reviews,
 }: Props) {
+  const [isPlanning, setIsPlanning] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
@@ -64,19 +64,35 @@ export default function MoviesPage({
           Authorization: `Token ${token}`,
         };
 
-        const result = await fetch(`http://localhost:8000/api/v1/auth/users/me`, {
+        let result = await fetch(`http://localhost:8000/api/v1/auth/users/me`, {
           headers: new Headers(auth),
         });
 
-        const userData: User = await result.json();
+        if (!result.ok) {
+          setUser(null);
+          return;
+        }
 
+        const userData: User = await result.json();
         setUser(userData);
 
-        const fav = await fetch(`http://localhost:8000/api/v1/users/${userData.id}/favorites`);
-        const favorites = await fav.json();
+        result = await fetch(`http://localhost:8000/api/v1/users/${userData.id}/favorites`);
 
-        if (favorites.some(({ id }: { id: string }) => id === movie_id)) {
-          setIsFavorite(true);
+        if (result.ok) {
+          const favorites = await result.json();
+
+          if (favorites.some(({ id }: { id: string }) => id === movie_id)) {
+            setIsFavorite(true);
+          }
+
+          result = await fetch(`http://localhost:8000/api/v1/users/${userData.id}/watchlist`);
+          const watchlist = await result.json();
+
+          if (result.ok) {
+            if (watchlist.some(({ id }: { id: string }) => id === movie_id)) {
+              setIsPlanning(true);
+            }
+          }
         }
       }
     })();
@@ -142,13 +158,13 @@ export default function MoviesPage({
     }
   }
 
-  async function removeFromFavorites() {
+  async function removeMovie(type: 'favorites' | 'watchlist') {
     if (!user) {
       notifications.show({
         withCloseButton: true,
         autoClose: 30000,
         title: 'Not Logged In',
-        message: 'Please log in to remove movie from favorites.',
+        message: `Please log in to remove movie from ${type}.`,
         color: 'red',
         loading: false,
       });
@@ -162,7 +178,7 @@ export default function MoviesPage({
       Authorization: `Token ${token}`,
     };
 
-    const result = await fetch(`http://localhost:8000/api/v1/users/${user.id}/favorites`, {
+    const result = await fetch(`http://localhost:8000/api/v1/users/${user.id}/${type}`, {
       method: 'DELETE',
       headers: new Headers(headers),
       body: JSON.stringify({
@@ -173,17 +189,22 @@ export default function MoviesPage({
     try {
       if (result.status !== 204) {
         throw new Error(
-          `Unable to remove ${media_title} from favorites. Please try again at a later time.`,
+          `Unable to remove ${media_title} from ${type}. Please try again at a later time.`,
         );
       }
 
-      setIsFavorite(false);
+      if (type === 'watchlist') {
+        setIsPlanning(false);
+      } else {
+        setIsFavorite(false);
+      }
+
       notifications.show({
         withCloseButton: true,
         autoClose: 30000,
-        title: 'Success',
-        message: `Removed ${media_title} from favorites.`,
-        color: 'green',
+        title: 'Deleted',
+        message: `Removed ${media_title} from ${type}.`,
+        color: 'yellow',
         loading: false,
       });
     } catch (error) {
@@ -200,13 +221,13 @@ export default function MoviesPage({
     }
   }
 
-  async function addToFavorites() {
+  async function addMovie(type: 'favorites' | 'watchlist') {
     if (!user) {
       notifications.show({
         withCloseButton: true,
         autoClose: 30000,
         title: 'Not Logged In',
-        message: 'Please log in to save movie to favorites.',
+        message: `Please log in to save movie to ${type}.`,
         color: 'red',
         loading: false,
       });
@@ -220,7 +241,7 @@ export default function MoviesPage({
       Authorization: `Token ${token}`,
     };
 
-    const result = await fetch(`http://localhost:8000/api/v1/users/${user.id}/favorites`, {
+    const result = await fetch(`http://localhost:8000/api/v1/users/${user.id}/${type}`, {
       method: 'POST',
       headers: new Headers(headers),
       body: JSON.stringify({
@@ -231,16 +252,21 @@ export default function MoviesPage({
     try {
       if (result.status !== 201) {
         throw new Error(
-          `Unable to save ${media_title} to favorites. Please try again at a later time.`,
+          `Unable to save ${media_title} to ${type}. Please try again at a later time.`,
         );
       }
 
-      setIsFavorite(true);
+      if (type === 'watchlist') {
+        setIsPlanning(true);
+      } else {
+        setIsFavorite(true);
+      }
+
       notifications.show({
         withCloseButton: true,
         autoClose: 30000,
         title: 'Success',
-        message: `Added ${media_title} to favorites!`,
+        message: `Added ${media_title} to ${type}!`,
         color: 'green',
         loading: false,
       });
@@ -283,19 +309,30 @@ export default function MoviesPage({
                 ))}
                 <Text>{convertToReadableTime(media_length)}</Text>
                 <Text>{media_description}</Text>
-                <ActionIcon
-                  onClick={isFavorite ? removeFromFavorites : addToFavorites}
-                  size={rem(42)}
-                  variant="light"
-                  color="pink"
-                  aria-label="Favorite"
-                >
-                  {isFavorite ? (
-                    <IconHeartFilled style={{ width: '80%', height: '80%' }} stroke={3} />
-                  ) : (
-                    <IconHeart style={{ width: '80%', height: '80%' }} stroke={3} />
-                  )}
-                </ActionIcon>
+                <Group>
+                  <ActionIcon
+                    onClick={() => (isFavorite ? removeMovie('favorites') : addMovie('favorites'))}
+                    size={36}
+                    variant="light"
+                    color="pink"
+                    aria-label="Favorite"
+                  >
+                    {isFavorite ? <IconHeartFilled stroke={3} /> : <IconHeart stroke={3} />}
+                  </ActionIcon>
+                  <Button
+                    variant="light"
+                    onClick={() => (isPlanning ? removeMovie('watchlist') : addMovie('watchlist'))}
+                    leftSection={
+                      isPlanning ? (
+                        <IconCheck size={rem(20)} />
+                      ) : (
+                        <IconPlayerPlayFilled size={rem(16)} />
+                      )
+                    }
+                  >
+                    {isPlanning ? 'Added to Watch List' : 'Add to Watch List'}
+                  </Button>
+                </Group>
               </Stack>
             </Group>
           </Card>
