@@ -53,6 +53,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = models.Review
         fields = ['id', 'user', 'movie', 'content']
 
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Rating
+        fields = ['id', 'user', 'movie', 'rating']
 
 # Movie serializer with nested Genre and Actor serializers
 class MovieInfoSerializer(serializers.ModelSerializer):

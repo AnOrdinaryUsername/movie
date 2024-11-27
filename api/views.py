@@ -251,3 +251,176 @@ class UserFavoriteList(APIView):
             return Response(
                 {"error": "Movie not in favorites"}, status=status.HTTP_404_NOT_FOUND
             )
+
+class UserWatchList(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    @swagger_auto_schema(responses={200: MovieInfoSerializer(many=True)})
+    def get(self, request, pk):
+        user = get_object_or_404(User, id=pk)
+        watchlist = user.watchlist.all()
+        serializer = MovieInfoSerializer(watchlist, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['movie_id'],
+            properties={
+                'movie_id': openapi.Schema(type=openapi.FORMAT_UUID),
+            }
+        ),
+        responses={
+            201: openapi.Response(
+                description="CREATED",
+                examples={
+                    "application/json": {
+                    'message': 'Movie added to watchlist'
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="BAD REQUEST",
+                examples={
+                    "application/json": {
+                    "error": "movie_id is required"
+                    }
+                }
+            ),
+            401: openapi.Response(
+                description="UNAUTHORIZED",
+                examples={
+                    "application/json": {
+                    "error": "Invalid token"
+                    }
+                }
+            ),
+            404: openapi.Response(
+                description="NOT FOUND",
+                examples={
+                    "application/json": {
+                    "detail": "No CustomUser matches the given query."
+                    }
+                }
+            ),
+            
+            409: openapi.Response(
+                description="CONFLICT",
+                examples={
+                    "application/json": {
+                    "error": "Movie already in watchlist"
+                    }
+                }
+            ),
+        }
+    )
+    def post(self, request, pk):
+        # Get token from Authorization header
+        auth = get_authorization_header(request).split()[1].decode()
+        # Get user based on token provided
+        auth_user = Token.objects.get(key=auth).user
+
+        user = get_object_or_404(User, id=pk)
+
+        # Check if user pk matches the token user
+        if auth_user != user:
+            return Response(
+                {"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        movie_id = request.data.get("movie_id")
+
+        if not movie_id:
+            return Response(
+                {"error": "movie_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        movie = get_object_or_404(MovieInfo, id=movie_id)
+
+        if movie in user.watchlist.all():
+            return Response(
+                {"error": "Movie already in watchlist"},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        user.watchlist.add(movie)
+        return Response(
+            {"message": "Movie added to watchlist"}, status=status.HTTP_201_CREATED
+        )
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['movie_id'],
+            properties={
+                'movie_id': openapi.Schema(type=openapi.FORMAT_UUID),
+            }
+        ),
+        responses={
+            204: openapi.Response(
+                description="NO CONTENT",
+                examples={
+                    "application/json": {
+                    'message': 'Movie removed from watchlist'
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="BAD REQUEST",
+                examples={
+                    "application/json": {
+                    "error": "movie_id is required"
+                    }
+                }
+            ),
+            401: openapi.Response(
+                description="UNAUTHORIZED",
+                examples={
+                    "application/json": {
+                    "error": "Invalid token"
+                    }
+                }
+            ),
+            404: openapi.Response(
+                description="NOT FOUND",
+                examples={
+                    "application/json": {
+                    "error": "Movie not in watchlist"
+                    }
+                }
+            ),
+        }
+    )
+    def delete(self, request, pk):
+        # Get token from Authorization header
+        auth = get_authorization_header(request).split()[1].decode()
+        # Get user based on token provided
+        auth_user = Token.objects.get(key=auth).user
+
+        user = get_object_or_404(User, id=pk)
+
+        # Check if user pk matches the token user
+        if auth_user != user:
+            return Response(
+                {"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        movie_id = request.data.get("movie_id")
+
+        if not movie_id:
+            return Response(
+                {"error": "movie_id is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        movie = get_object_or_404(MovieInfo, id=movie_id)
+
+        if movie in user.watchlist.all():
+            user.watchlist.remove(movie)
+            return Response(
+                {"message": "Movie removed from watchlist"},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+        else:
+            return Response(
+                {"error": "Movie not in watchlist"}, status=status.HTTP_404_NOT_FOUND
+            )

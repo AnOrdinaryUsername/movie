@@ -95,7 +95,8 @@ class MovieInfo(models.Model):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     username = models.CharField(max_length=255, unique=True)
-    favorites = models.ManyToManyField(MovieInfo, blank=True)
+    favorites = models.ManyToManyField(MovieInfo, blank=True, related_name="favorites")
+    watchlist = models.ManyToManyField(MovieInfo, blank=True, related_name="watchlist")
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
@@ -141,3 +142,9 @@ class Review(models.Model):
 
     def __str__(self):
         return self.content
+    
+class Rating(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    movie = models.ManyToManyField(MovieInfo)
+    rating = models.SmallIntegerField(null=True, blank=True)
