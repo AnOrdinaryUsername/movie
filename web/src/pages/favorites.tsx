@@ -20,11 +20,12 @@ import {
 } from '@mantine/core';
 import { IconDotsVertical, IconTrash } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { rm } from 'fs';
 
 export default function FavoritesPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [favorites, setFavorites] = useState<MovieInfo[]>([]);
+  const [favorites, setFavorites] = useState<MovieInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -138,11 +139,26 @@ export default function FavoritesPage() {
         <Stack align="flex-start" gap="md">
           {error && <Text>{error}</Text>}
 
-          {isLoading && <Skeleton height={50} />}
+          {/* Show 5 Skeleton cards when the movies are still fetching */}
+          {isLoading &&
+            [...Array(5).keys()].map((_, i) => (
+              <Card p={0} radius="md" w="100%" h={rem(130)} key={i}>
+                <Group gap="md">
+                  <Skeleton height={8} h={rem(130)} w={rem(100)} />
+                  <Stack h={rem(130)} justify="center" gap="md">
+                    <Skeleton height={8} w={rem(250)} radius="xl" />
+                    <Skeleton height={8} w={rem(100)} mt={6} radius="xl" />
+                  </Stack>
+                </Group>
+              </Card>
+            ))}
 
-          {favorites.length === 0 && <Text fw={500}>You have no favorite movies.</Text>}
+          {favorites && favorites.length === 0 && (
+            <Text fw={500}>You have no favorite movies.</Text>
+          )}
 
-          {favorites.length > 0 &&
+          {favorites &&
+            favorites.length > 0 &&
             favorites.map(({ id, image_url, media_title, media_release_date }) => (
               <Card p={0} radius="md" w="100%" key={id}>
                 <Group justify="space-between" align="flex-start">

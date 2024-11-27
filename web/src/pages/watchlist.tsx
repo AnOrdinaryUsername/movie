@@ -24,7 +24,7 @@ import { notifications } from '@mantine/notifications';
 export default function WatchlistPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [watchlist, setWatchlist] = useState<MovieInfo[]>([]);
+  const [watchlist, setWatchlist] = useState<MovieInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -138,11 +138,26 @@ export default function WatchlistPage() {
         <Stack align="flex-start" gap="md">
           {error && <Text>{error}</Text>}
 
-          {isLoading && <Skeleton height={50} />}
+          {/* Show 5 Skeleton cards when the movies are still fetching */}
+          {isLoading &&
+            [...Array(5).keys()].map((_, i) => (
+              <Card p={0} radius="md" w="100%" h={rem(130)} key={i}>
+                <Group gap="md">
+                  <Skeleton height={8} h={rem(130)} w={rem(100)} />
+                  <Stack h={rem(130)} justify="center" gap="md">
+                    <Skeleton height={8} w={rem(250)} radius="xl" />
+                    <Skeleton height={8} w={rem(100)} mt={6} radius="xl" />
+                  </Stack>
+                </Group>
+              </Card>
+            ))}
 
-          {watchlist.length === 0 && <Text fw={500}>You have no movies on your watchlist.</Text>}
+          {watchlist && watchlist.length === 0 && (
+            <Text fw={500}>You have no movies on your watchlist.</Text>
+          )}
 
-          {watchlist.length > 0 &&
+          {watchlist &&
+            watchlist.length > 0 &&
             watchlist.map(({ id, image_url, media_title, media_release_date }) => (
               <Card p={0} radius="md" w="100%" key={id}>
                 <Group justify="space-between" align="flex-start">
