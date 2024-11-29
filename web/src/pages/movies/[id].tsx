@@ -8,12 +8,14 @@ import {
   Container,
   Group,
   Image,
+  Menu,
   Modal,
   rem,
   Stack,
   Text,
   Textarea,
   Title,
+  useModalsStack,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import Link from 'next/link';
@@ -21,13 +23,22 @@ import Link from 'next/link';
 import type { GetServerSidePropsContext } from 'next';
 import type { MovieInfo, Genre, User } from '@/types';
 import { useDisclosure } from '@mantine/hooks';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, ChangeEventHandler, MouseEvent, useEffect, useRef, useState } from 'react';
 import { convertToReadableTime } from '@/utils';
-import { IconCheck, IconHeart, IconHeartFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconDotsVertical,
+  IconEdit,
+  IconHeart,
+  IconHeartFilled,
+  IconPlayerPlayFilled,
+  IconTrash,
+} from '@tabler/icons-react';
+import { useModals } from '@mantine/modals';
 
 interface Review {
   id: string;
-  user: number;
+  user: User;
   movie: string;
   content: string;
 }
@@ -51,9 +62,10 @@ export default function MoviesPage({
   const [isPlanning, setIsPlanning] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
-  const [opened, { open, close }] = useDisclosure(false);
+  const stack = useModalsStack(['editReview', 'createReview']);
   const [userReviews, setUserReviews] = useState<Array<Review> | null>(reviews);
   const [text, setText] = useState('');
+  const [userReviewId, setUserReviewId] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -75,6 +87,7 @@ export default function MoviesPage({
 
         const userData: User = await result.json();
         setUser(userData);
+        setText(reviews.find((review) => review.user.id === userData.id)?.content ?? '');
 
         result = await fetch(`http://localhost:8000/api/v1/users/${userData.id}/favorites`);
 
@@ -108,9 +121,19 @@ export default function MoviesPage({
         Authorization: `Token ${token}`,
       };
 
+      if (text.length === 0) {
+        notifications.show({
+          withCloseButton: true,
+          autoClose: 5000,
+          title: 'Submission Error',
+          message: 'Cannot submit an empty review.',
+          color: 'red',
+          loading: false,
+        });
+        return;
+      }
+
       const body = {
-        user: user.id,
-        movie: movie_id,
         content: text,
       };
 
@@ -129,7 +152,7 @@ export default function MoviesPage({
 
         notifications.show({
           withCloseButton: true,
-          autoClose: 30000,
+          autoClose: 5000,
           title: 'Success',
           message: `Submitted a review for ${media_title}!`,
           color: 'green',
@@ -140,14 +163,14 @@ export default function MoviesPage({
         const prevReviews = userReviews ?? [];
         setUserReviews([...prevReviews, review]);
 
-        close();
+        stack.close("createReview");
       } catch (error) {
         console.error(error);
 
         if (error instanceof Error) {
           notifications.show({
             withCloseButton: true,
-            autoClose: 30000,
+            autoClose: 5000,
             title: 'Review Error',
             message: error.message,
             color: 'red',
@@ -162,7 +185,7 @@ export default function MoviesPage({
     if (!user) {
       notifications.show({
         withCloseButton: true,
-        autoClose: 30000,
+        autoClose: 5000,
         title: 'Not Logged In',
         message: `Please log in to remove movie from ${type}.`,
         color: 'red',
@@ -201,7 +224,7 @@ export default function MoviesPage({
 
       notifications.show({
         withCloseButton: true,
-        autoClose: 30000,
+        autoClose: 5000,
         title: 'Deleted',
         message: `Removed ${media_title} from ${type}.`,
         color: 'yellow',
@@ -211,7 +234,7 @@ export default function MoviesPage({
       if (error instanceof Error) {
         notifications.show({
           withCloseButton: true,
-          autoClose: 30000,
+          autoClose: 5000,
           title: 'Error',
           message: error.message,
           color: 'red',
@@ -225,7 +248,7 @@ export default function MoviesPage({
     if (!user) {
       notifications.show({
         withCloseButton: true,
-        autoClose: 30000,
+        autoClose: 5000,
         title: 'Not Logged In',
         message: `Please log in to save movie to ${type}.`,
         color: 'red',
@@ -264,7 +287,7 @@ export default function MoviesPage({
 
       notifications.show({
         withCloseButton: true,
-        autoClose: 30000,
+        autoClose: 5000,
         title: 'Success',
         message: `Added ${media_title} to ${type}!`,
         color: 'green',
@@ -274,7 +297,7 @@ export default function MoviesPage({
       if (error instanceof Error) {
         notifications.show({
           withCloseButton: true,
-          autoClose: 30000,
+          autoClose: 5000,
           title: 'Error',
           message: error.message,
           color: 'red',
@@ -284,10 +307,138 @@ export default function MoviesPage({
     }
   }
 
+  async function deleteReview(event: MouseEvent<HTMLButtonElement>) {
+    if (!user) {
+      return;
+    }
+
+    const token = sessionStorage.getItem('token');
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Token ${token}`,
+    };
+
+    const result = await fetch(
+      `http://localhost:8000/api/v1/movies/${movie_id}/reviews/${userReviewId}`,
+      {
+        method: 'DELETE',
+        headers: new Headers(headers),
+      },
+    );
+
+    try {
+      if (result.status !== 204) {
+        throw new Error(`Unable to delete review. Please try again at a later time.`);
+      }
+
+      if (userReviews) {
+        setUserReviews(userReviews.filter((movie) => movie.id !== userReviewId));
+        setText('');
+        setUserReviewId('');
+      }
+
+      notifications.show({
+        withCloseButton: true,
+        autoClose: 5000,
+        title: 'Deleted',
+        message: `Your review has been removed.`,
+        color: 'yellow',
+        loading: false,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        notifications.show({
+          withCloseButton: true,
+          autoClose: 5000,
+          title: 'Error',
+          message: error.message,
+          color: 'red',
+          loading: false,
+        });
+      }
+    }
+  }
+
+  async function editReview(event: MouseEvent<HTMLButtonElement>) {
+    if (!user) {
+      return;
+    }
+
+    const token = sessionStorage.getItem('token');
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Token ${token}`,
+    };
+
+    const body = {
+      content: text,
+    };
+
+    const result = await fetch(
+      `http://localhost:8000/api/v1/movies/${movie_id}/reviews/${userReviewId}`,
+      {
+        method: 'PATCH',
+        headers: new Headers(headers),
+        body: JSON.stringify(body),
+      },
+    );
+
+    try {
+      if (!result.ok) {
+        throw new Error(`Unable to update review. Please try again at a later time.`);
+      }
+
+      if (userReviews) {
+        setUserReviews(
+          userReviews.map((review) => {
+            if (review.id === userReviewId) {
+              return { ...review, content: text };
+            } else {
+              return review;
+            }
+          }),
+        );
+      }
+
+      stack.close("editReview");
+
+      notifications.show({
+        withCloseButton: true,
+        autoClose: 5000,
+        title: 'Updated',
+        message: `Your changes have been saved.`,
+        color: 'green',
+        loading: false,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        notifications.show({
+          withCloseButton: true,
+          autoClose: 5000,
+          title: 'Error',
+          message: error.message,
+          color: 'red',
+          loading: false,
+        });
+      }
+    }
+  }
+
+  function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setText(event.currentTarget.value);
+  }
+
+  function openEditModal(id: string) {
+    stack.open('editReview');
+    setUserReviewId(id);
+  }
+
   return (
     <GenericLayout size="lg" bg="#dce4f5">
       <Header />
-      <Container component="main" p={0} m={0} maw="100%" mih="100%">
+      <Container component="main" p={0} pb={rem(120)} m={0} maw="100%" mih="100%">
         <Stack align="flex-start" gap="md">
           <Card p={rem(16)} radius="md" w="100%">
             <Group>
@@ -366,7 +517,11 @@ export default function MoviesPage({
           </Group>
           <Group justify="space-between" w="100%" pb={rem(16)}>
             <Title order={2}>Reviews</Title>
-            {user && <Button onClick={open}>Write a Review</Button>}
+            {user && (
+              <Button onClick={() => stack.open('createReview')} disabled={text !== ''}>
+                Write a Review
+              </Button>
+            )}
           </Group>
         </Stack>
         <Stack>
@@ -374,26 +529,90 @@ export default function MoviesPage({
             userReviews.map((review) => (
               <Stack key={review.id}>
                 <Card p={rem(16)} radius="md" w="100%">
-                  <Title order={3} pt={rem(16)}>
-                    {review.user}
-                  </Title>
-                  <Text>{review.content}</Text>
+                  <Group justify="space-between">
+                    <Stack>
+                      <Title order={3}>{review.user.username}</Title>
+                      <Text>{review.content}</Text>
+                    </Stack>
+                    {review.user.username === user?.username && (
+                      <Menu
+                        shadow="md"
+                        width={130}
+                        position="bottom-end"
+                        transitionProps={{ transition: 'pop-top-right' }}
+                      >
+                        <Menu.Target>
+                          <ActionIcon
+                            size={72}
+                            variant="white"
+                            color="gray"
+                            aria-label="Edit"
+                            p={rem(24)}
+                          >
+                            {<IconDotsVertical stroke={3} />}
+                          </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown mt={rem(-24)}>
+                          <Menu.Item
+                            leftSection={<IconEdit style={{ width: rem(14), height: rem(14) }} />}
+                            onClick={() => openEditModal(review.id)}
+                          >
+                            Edit
+                          </Menu.Item>
+                          <Menu.Item
+                            color="#a61414"
+                            leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
+                            onClick={deleteReview}
+                          >
+                            Delete
+                          </Menu.Item>
+                        </Menu.Dropdown>
+                      </Menu>
+                    )}
+                  </Group>
                 </Card>
               </Stack>
             ))}
         </Stack>
-        <Modal centered opened={opened} onClose={close} title="My Review">
+        <Modal
+          {...stack.register('createReview')}
+          centered
+          onClose={() => stack.close('createReview')}
+          title="My Review"
+        >
           <Stack>
             <Textarea
               resize="vertical"
-              label="Review"
+              aria-label="Review"
               placeholder="This movie is amazing!"
               value={text}
-              onChange={(event) => setText(event.currentTarget.value)}
+              onChange={handleChange}
             />
             <Button onClick={submitReview} mt={rem(24)}>
               Submit
             </Button>
+          </Stack>
+        </Modal>
+        <Modal
+          {...stack.register('editReview')}
+          centered
+          onClose={() => stack.close('editReview')}
+          title="Edit Review"
+        >
+          <Stack>
+            <Textarea
+              resize="vertical"
+              aria-label="Review"
+              placeholder="This movie is amazing!"
+              value={text}
+              onChange={handleChange}
+            />
+            <Group justify="flex-end" mt={rem(24)}>
+              <Button variant="light" onClick={() => stack.close("editReview")}>
+                Cancel
+              </Button>
+              <Button onClick={editReview}>Confirm</Button>
+            </Group>
           </Stack>
         </Modal>
       </Container>

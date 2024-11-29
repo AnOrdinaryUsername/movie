@@ -50,3 +50,10 @@ export interface User {
   username: string;
   id: number;
 }
+
+export interface Review {
+  id: string;
+  user: User;
+  movie: string;
+  content: string;
+}
