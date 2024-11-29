@@ -18,7 +18,7 @@ class UserCreateSerializer(UserCreateSerializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "username"]
+        fields = ["id", "username"]
 
 
 # Genre serializer
@@ -49,6 +49,7 @@ class ActorSerializer(serializers.ModelSerializer):
 
 # Review serializer
 class ReviewSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer()
     class Meta:
         model = models.Review
         fields = ['id', 'user', 'movie', 'content']
