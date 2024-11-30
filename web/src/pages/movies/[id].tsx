@@ -34,7 +34,8 @@ import {
   IconPlayerPlayFilled,
   IconTrash,
 } from '@tabler/icons-react';
-import { useModals } from '@mantine/modals';
+import { modals, useModals } from '@mantine/modals';
+import RichTextEditor from '@/components/RichTextEditor';
 
 interface Review {
   id: string;
@@ -163,7 +164,7 @@ export default function MoviesPage({
         const prevReviews = userReviews ?? [];
         setUserReviews([...prevReviews, review]);
 
-        stack.close("createReview");
+        stack.close('createReview');
       } catch (error) {
         console.error(error);
 
@@ -307,7 +308,7 @@ export default function MoviesPage({
     }
   }
 
-  async function deleteReview(event: MouseEvent<HTMLButtonElement>) {
+  async function deleteReview(id: string) {
     if (!user) {
       return;
     }
@@ -319,13 +320,10 @@ export default function MoviesPage({
       Authorization: `Token ${token}`,
     };
 
-    const result = await fetch(
-      `http://localhost:8000/api/v1/movies/${movie_id}/reviews/${userReviewId}`,
-      {
-        method: 'DELETE',
-        headers: new Headers(headers),
-      },
-    );
+    const result = await fetch(`http://localhost:8000/api/v1/movies/${movie_id}/reviews/${id}`, {
+      method: 'DELETE',
+      headers: new Headers(headers),
+    });
 
     try {
       if (result.status !== 204) {
@@ -333,7 +331,7 @@ export default function MoviesPage({
       }
 
       if (userReviews) {
-        setUserReviews(userReviews.filter((movie) => movie.id !== userReviewId));
+        setUserReviews(userReviews.filter((movie) => movie.id !== id));
         setText('');
         setUserReviewId('');
       }
@@ -402,7 +400,7 @@ export default function MoviesPage({
         );
       }
 
-      stack.close("editReview");
+      stack.close('editReview');
 
       notifications.show({
         withCloseButton: true,
@@ -433,6 +431,17 @@ export default function MoviesPage({
   function openEditModal(id: string) {
     stack.open('editReview');
     setUserReviewId(id);
+  }
+
+  function openConfirmModal(id: string) {
+    modals.openConfirmModal({
+      title: 'Delete Review',
+      centered: true,
+      children: <Text size="sm">Are you sure you want to delete your review?</Text>,
+      labels: { confirm: 'Confirm', cancel: 'Cancel' },
+      confirmProps: { color: 'red' },
+      onConfirm: () => deleteReview(id),
+    });
   }
 
   return (
@@ -529,47 +538,49 @@ export default function MoviesPage({
             userReviews.map((review) => (
               <Stack key={review.id}>
                 <Card p={rem(16)} radius="md" w="100%">
-                  <Group justify="space-between">
-                    <Stack>
+                  <Stack>
+                    <Group justify="space-between" h={rem(40)}>
                       <Title order={3}>{review.user.username}</Title>
-                      <Text>{review.content}</Text>
-                    </Stack>
-                    {review.user.username === user?.username && (
-                      <Menu
-                        shadow="md"
-                        width={130}
-                        position="bottom-end"
-                        transitionProps={{ transition: 'pop-top-right' }}
-                      >
-                        <Menu.Target>
-                          <ActionIcon
-                            size={72}
-                            variant="white"
-                            color="gray"
-                            aria-label="Edit"
-                            p={rem(24)}
-                          >
-                            {<IconDotsVertical stroke={3} />}
-                          </ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown mt={rem(-24)}>
-                          <Menu.Item
-                            leftSection={<IconEdit style={{ width: rem(14), height: rem(14) }} />}
-                            onClick={() => openEditModal(review.id)}
-                          >
-                            Edit
-                          </Menu.Item>
-                          <Menu.Item
-                            color="#a61414"
-                            leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
-                            onClick={deleteReview}
-                          >
-                            Delete
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
-                    )}
-                  </Group>
+                      {review.user.username === user?.username && (
+                        <Menu
+                          shadow="md"
+                          width={130}
+                          position="bottom-end"
+                          transitionProps={{ transition: 'pop-top-right' }}
+                        >
+                          <Menu.Target>
+                            <ActionIcon
+                              size={72}
+                              variant="white"
+                              color="gray"
+                              aria-label="Edit"
+                              p={rem(24)}
+                            >
+                              {<IconDotsVertical stroke={3} />}
+                            </ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown mt={rem(-24)}>
+                            <Menu.Item
+                              leftSection={<IconEdit style={{ width: rem(14), height: rem(14) }} />}
+                              onClick={() => openEditModal(review.id)}
+                            >
+                              Edit
+                            </Menu.Item>
+                            <Menu.Item
+                              color="#a61414"
+                              leftSection={
+                                <IconTrash style={{ width: rem(14), height: rem(14) }} />
+                              }
+                              onClick={() => openConfirmModal(review.id)}
+                            >
+                              Delete
+                            </Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                      )}
+                    </Group>
+                    <div dangerouslySetInnerHTML={{ __html: review.content }} />
+                  </Stack>
                 </Card>
               </Stack>
             ))}
@@ -579,15 +590,10 @@ export default function MoviesPage({
           centered
           onClose={() => stack.close('createReview')}
           title="My Review"
+          size="xl"
         >
           <Stack>
-            <Textarea
-              resize="vertical"
-              aria-label="Review"
-              placeholder="This movie is amazing!"
-              value={text}
-              onChange={handleChange}
-            />
+            <RichTextEditor value={text} onChange={setText} />
             <Button onClick={submitReview} mt={rem(24)}>
               Submit
             </Button>
@@ -598,17 +604,12 @@ export default function MoviesPage({
           centered
           onClose={() => stack.close('editReview')}
           title="Edit Review"
+          size="xl"
         >
           <Stack>
-            <Textarea
-              resize="vertical"
-              aria-label="Review"
-              placeholder="This movie is amazing!"
-              value={text}
-              onChange={handleChange}
-            />
+            <RichTextEditor value={text} onChange={setText} />
             <Group justify="flex-end" mt={rem(24)}>
-              <Button variant="light" onClick={() => stack.close("editReview")}>
+              <Button variant="light" onClick={() => stack.close('editReview')}>
                 Cancel
               </Button>
               <Button onClick={editReview}>Confirm</Button>

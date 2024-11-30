@@ -3,6 +3,7 @@
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/spotlight/styles.css';
+import '@mantine/tiptap/styles.css';
 
 import { MantineProvider, createTheme } from '@mantine/core';
 import type { AppProps } from 'next/app';
