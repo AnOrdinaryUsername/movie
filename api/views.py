@@ -14,6 +14,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from djoser.serializers import UserSerializer  # Ensure this import is included
+import nh3
 
 from api.models import CustomUser, MovieInfo, Review
 from api.serializers import MovieInfoSerializer, ReviewSerializer
@@ -33,8 +34,7 @@ class IsOwnerOrReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return True
 
-        # Write permissions are only allowed to the owner of the snippet.
-        print(obj.user)
+        
         return obj.user == request.user
 
 
@@ -86,7 +86,7 @@ class ReviewList(generics.ListCreateAPIView):
         new_review = Review.objects.create(
             user=request.user,
             movie=MovieInfo.objects.get(id=movie_id),
-            content=request.data.get("content"),
+            content=nh3.clean(request.data.get("content")),
         )
         serializer = ReviewSerializer(new_review)
 
@@ -107,7 +107,7 @@ class ReviewDetail(APIView):
         return Response(serializer.data)
 
     def patch(self, request, movie_id, pk):
-        content = request.data.get("content")
+        content = nh3.clean(request.data.get("content"))
 
         if not content:
             return Response({ "error": "content is required"}, status=status.HTTP_400_BAD_REQUEST)
