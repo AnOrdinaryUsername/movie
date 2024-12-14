@@ -14,6 +14,10 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from djoser.serializers import UserSerializer  # Ensure this import is included
+from mistralai import Mistral
+from django.utils.html import strip_tags
+import os
+import json
 import nh3
 
 from api.models import CustomUser, MovieInfo, Review
@@ -157,6 +161,49 @@ class MovieSearchView(APIView):
             {"error": "No search query provided."}, status=status.HTTP_400_BAD_REQUEST
         )
 
+
+class MistralSuggestion(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        movie = MovieInfo.objects.get(id=pk)
+        reviews = list(Review.objects.filter(movie=pk))
+
+        prompts = []
+
+        for content in reviews:
+            prompts.append({
+                "role": "user",
+                "content": f"{strip_tags(content)}"
+            })
+        
+        with Mistral(
+            api_key=os.getenv("MISTRAL_API_KEY", ""),
+        ) as s:
+            
+            res = s.chat.complete(model="mistral-small-latest", messages=[
+                {
+                    f"content": f"The following messages are reviews made by users for " 
+                    f"the movie {movie.media_title}. Summarize the general sentiment and highlight "
+                    f"any key points made by reviewers without bullet points or any formatting. "
+                    f"Keep it short and succinct. If there are no reviews say \'No reviews made\'.",
+                    "role": "system",
+                },
+                *prompts
+            ])
+            chat_response = json.loads(res.model_dump_json())
+            print(prompts)
+
+            if res is not None:
+                return Response({
+                    "message": chat_response["choices"][0]['message']['content']}, 
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"error": "Mistral error"}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
 class UserFavoriteList(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]

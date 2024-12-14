@@ -44,10 +44,21 @@ interface Review {
   content: string;
 }
 
+interface MistralSuccess {
+  message: string;
+}
+
+interface MistralFailure {
+  error: string;
+}
+
+type MistralSummary = MistralSuccess | MistralFailure;
+
 interface Props extends MovieInfo {
   movie_id: string;
   user: User;
   reviews: Array<Review>;
+  mistralSummary: MistralSuccess;
 }
 
 export default function MoviesPage({
@@ -59,6 +70,7 @@ export default function MoviesPage({
   image_url,
   movie_id,
   reviews,
+  mistralSummary
 }: Props) {
   const [isPlanning, setIsPlanning] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
@@ -515,11 +527,9 @@ export default function MoviesPage({
                     maw={rem(300)}
                     radius="md"
                   />
-                  <Title order={3} pt={rem(16)}>
+                  <Title order={3} pt={rem(16)} ta='center'>
                     {actor.name}
                   </Title>
-                  <Text>Born on {actor.birthday}</Text>
-                  <Text>{actor.description}</Text>
                 </Card>
               </Stack>
             ))}
@@ -534,6 +544,10 @@ export default function MoviesPage({
           </Group>
         </Stack>
         <Stack>
+          <Card>
+            <Title order={3}>🤖 AI Reviews Analysis</Title>
+            <Text pt={rem(16)}>{mistralSummary.message}</Text>
+          </Card>
           {userReviews &&
             userReviews.map((review) => (
               <Stack key={review.id}>
@@ -637,15 +651,18 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     });
 
   let reviews: Array<Review> | null = null;
+  let mistralSummary: string | null = null;
 
   try {
     const movieReviews = await fetch(`http://localhost:8000/api/v1/movies/${id}/reviews`);
+    const aiSummary = await fetch(`http://localhost:8000/api/v1/movies/${id}/mistral`);
 
-    if (!movieReviews.ok) {
+    if (!movieReviews.ok || !aiSummary.ok) {
       throw new Error('Reviews did not return a 200 response');
     }
 
     reviews = await movieReviews.json();
+    mistralSummary = await aiSummary.json();
   } catch (error) {
     console.error(error);
   }
@@ -661,6 +678,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       media_description,
       image_url,
       reviews,
+      mistralSummary,
       movie_id: id,
     },
   };

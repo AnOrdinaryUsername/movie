@@ -14,6 +14,7 @@ psycopg = "^3.2.3"
 djoser = "^2.2.3"
 django-cors-headers = "^4.6.0"
 nh3 = "^0.2.19"
+mistralai = "^1.2.5"
 
 [tool.poetry.group.dev.dependencies]
 drf-yasg = "^1.21.8"
